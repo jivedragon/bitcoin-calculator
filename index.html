@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Previous content remains the same until the mobile styles -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,7 +6,6 @@
     <title>Bitcoin Goal Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-      /* Previous styles remain the same until the mobile styles */
       body {
         font-family: Arial, sans-serif;
         max-width: 800px;
@@ -104,7 +102,7 @@
         width: 100%;
         border-collapse: collapse;
         margin-top: 15px;
-        min-width: 400px; /* Further reduced from 450px */
+        min-width: 400px;
       }
       th,
       td {
@@ -121,45 +119,12 @@
       tr:nth-child(even) {
         background-color: rgba(249, 249, 249, 0.9);
       }
-      .halving-row {
-        background-color: rgba(255, 243, 230, 0.9) !important;
-        font-weight: bold;
-      }
-      h1 {
-        color: #c41e3a;
-        text-align: center;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-      }
       .chart-container {
         margin-top: 20px;
         background-color: rgba(255, 255, 255, 0.95);
         padding: 15px;
         border-radius: 8px;
       }
-
-      /* Snow Animation */
-      .snowflake {
-        position: fixed;
-        top: -10px;
-        color: white;
-        font-size: 1em;
-        text-shadow: 0 0 1px #000;
-        user-select: none;
-        z-index: 0;
-        pointer-events: none;
-        animation: fall linear infinite;
-      }
-
-      @keyframes fall {
-        0% {
-          transform: translateY(-10vh) translateX(0);
-        }
-        100% {
-          transform: translateY(100vh) translateX(20px);
-        }
-      }
-
-      /* Mobile-specific styles */
       @media screen and (max-width: 600px) {
         body {
           padding: 10px;
@@ -168,30 +133,18 @@
           padding: 15px;
         }
         .table-container {
-          width: 100%;
-          margin: 0 auto;
           font-size: 0.75em;
-          display: flex;
-          justify-content: center;
         }
         table {
           min-width: 380px;
-          max-width: 100%;
         }
         th,
         td {
           padding: 3px 4px;
         }
-        #result {
-          padding: 10px;
-        }
-        h3 {
-          font-size: 1.1em;
-        }
       }
     </style>
   </head>
-  <!-- Rest of the HTML content remains exactly the same -->
   <body>
     <div class="calculator">
       <h1>Bitcoin Goal Calculator</h1>
@@ -199,52 +152,30 @@
         Current Bitcoin Price: <span id="btcPrice">Loading...</span>
       </div>
       <div class="info-box">
-        This calculator accounts for Bitcoin's annual growth rate which affects
-        both the price of Bitcoin and the value of your holdings. The growth
-        rate you specify will compound yearly, increasing both the Bitcoin price
-        and the value of your accumulated Bitcoin.
+        This calculator helps you determine how long it will take to reach your
+        Bitcoin goal through regular monthly investments, taking into account
+        the specified annual growth rate.
       </div>
       <div class="input-group">
         <label for="currentBtc">Current Bitcoin Holdings (BTC)</label>
-        <input
-          type="text"
-          id="currentBtc"
-          step="0.00000001"
-          value="0"
-          placeholder="0.0"
-          onfocus="this.select()"
-        />
+        <input type="text" id="currentBtc" value="0.5" placeholder="0.0" />
       </div>
       <div class="input-group">
         <label for="monthlyInvestment">Monthly Investment (USD)</label>
         <input
           type="text"
           id="monthlyInvestment"
-          value="100"
+          value="1000"
           placeholder="100"
-          onfocus="this.select()"
         />
       </div>
       <div class="input-group">
         <label for="growthRate">Annual Growth Rate (%)</label>
-        <input
-          type="text"
-          id="growthRate"
-          value="25"
-          placeholder="25"
-          onfocus="this.select()"
-        />
+        <input type="text" id="growthRate" value="25" placeholder="25" />
       </div>
       <div class="input-group">
         <label for="targetBtc">Target Bitcoin Amount (BTC)</label>
-        <input
-          type="text"
-          id="targetBtc"
-          step="0.00000001"
-          value="1.0"
-          placeholder="1.0"
-          onfocus="this.select()"
-        />
+        <input type="text" id="targetBtc" value="1.0" placeholder="1.0" />
       </div>
       <button onclick="calculate()">Calculate</button>
       <div id="result"></div>
@@ -256,25 +187,6 @@
     <script>
       let currentBtcPrice = 0;
       let projectionChart = null;
-
-      // Previous JavaScript functions remain the same until formatCurrency
-      function createSnowflake() {
-        const snowflake = document.createElement("div");
-        snowflake.classList.add("snowflake");
-        snowflake.innerHTML = "❄";
-        snowflake.style.left = Math.random() * 100 + "vw";
-        snowflake.style.animationDuration = Math.random() * 3 + 2 + "s";
-        snowflake.style.opacity = Math.random();
-        snowflake.style.fontSize = Math.random() * 10 + 10 + "px";
-
-        document.body.appendChild(snowflake);
-
-        setTimeout(() => {
-          snowflake.remove();
-        }, 5000);
-      }
-
-      setInterval(createSnowflake, 100);
 
       async function fetchBitcoinPrice() {
         try {
@@ -295,32 +207,26 @@
 
       function getInputValue(id, defaultValue = 0) {
         const element = document.getElementById(id);
-        const value = parseFloat(element.value);
+        const value = parseFloat(element.value.replace(/[^\d.-]/g, ""));
         return isNaN(value) ? defaultValue : value;
       }
 
       function formatCurrency(value) {
-        // Even more compact number formatting
-        const decimalPlaces = value >= 1000000 ? 0 : value >= 10000 ? 1 : 2;
-        const formatted = new Intl.NumberFormat("en-US", {
+        if (value >= 1000000000) {
+          return `$${(value / 1000000000).toFixed(1)}B`;
+        } else if (value >= 1000000) {
+          return `$${(value / 1000000).toFixed(1)}M`;
+        } else if (value >= 1000) {
+          return `$${(value / 1000).toFixed(1)}K`;
+        }
+        return new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-          minimumFractionDigits: decimalPlaces,
-          maximumFractionDigits: decimalPlaces,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
         }).format(value);
-
-        // For very large numbers, use K/M/B notation
-        if (value >= 1000000000) {
-          return `${(value / 1000000000).toFixed(1)}B`;
-        } else if (value >= 1000000) {
-          return `${(value / 1000000).toFixed(1)}M`;
-        } else if (value >= 1000) {
-          return `${(value / 1000).toFixed(1)}K`;
-        }
-        return formatted;
       }
 
-      // Previous JavaScript functions remain the same until createProjectionTable
       function showResult(message, isError = false) {
         const resultDiv = document.getElementById("result");
         const errorDiv = document.getElementById("error-message");
@@ -339,15 +245,6 @@
       }
 
       function updateChart(projections) {
-        const labels = projections.map((p) => {
-          const years = Math.floor(p.months / 12);
-          const months = p.months % 12;
-          return months > 0 ? `Year ${years}.${months}` : `Year ${years}`;
-        });
-        const portfolioValues = projections.map((p) => p.value);
-        const btcPrices = projections.map((p) => p.price);
-        const totalInvested = projections.map((p) => p.invested);
-
         if (projectionChart) {
           projectionChart.destroy();
         }
@@ -356,59 +253,34 @@
         projectionChart = new Chart(ctx, {
           type: "line",
           data: {
-            labels: labels,
+            labels: projections.map(
+              (p) => `Year ${(p.months / 12).toFixed(1)}`
+            ),
             datasets: [
               {
                 label: "Portfolio Value",
-                data: portfolioValues,
+                data: projections.map((p) => p.value),
                 borderColor: "#c41e3a",
                 backgroundColor: "rgba(196, 30, 58, 0.1)",
                 fill: true,
-                yAxisID: "y",
-              },
-              {
-                label: "Bitcoin Price",
-                data: btcPrices,
-                borderColor: "#f7931a",
-                backgroundColor: "rgba(247, 147, 26, 0.1)",
-                fill: true,
-                yAxisID: "y",
               },
               {
                 label: "Total Invested",
-                data: totalInvested,
+                data: projections.map((p) => p.invested),
                 borderColor: "#2d862d",
                 backgroundColor: "rgba(45, 134, 45, 0.1)",
                 fill: true,
-                yAxisID: "y",
               },
             ],
           },
           options: {
             responsive: true,
-            interaction: {
-              mode: "index",
-              intersect: false,
-            },
             scales: {
               y: {
                 type: "logarithmic",
-                display: true,
-                position: "left",
                 title: {
                   display: true,
                   text: "Value (USD)",
-                },
-              },
-            },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `${context.dataset.label}: ${formatCurrency(
-                      context.raw
-                    )}`;
-                  },
                 },
               },
             },
@@ -419,15 +291,15 @@
       function createProjectionTable(projections) {
         const tableContainer = document.createElement("div");
         tableContainer.className = "table-container";
-
         const table = document.createElement("table");
+
         table.innerHTML = `
           <tr>
             <th>Time</th>
             <th>BTC</th>
             <th>Price</th>
             <th>Value</th>
-            <th>Inv.</th>
+            <th>Invested</th>
             <th>ROI</th>
           </tr>
         `;
@@ -436,179 +308,125 @@
           const years = Math.floor(p.months / 12);
           const months = p.months % 12;
           const timeLabel = months > 0 ? `Y${years}.${months}` : `Y${years}`;
+          const roi = ((p.value / p.invested - 1) * 100).toFixed(0);
 
-          const row = document.createElement("tr");
-          const roi = (p.value / p.invested - 1) * 100;
-          row.innerHTML = `
-            <td>${timeLabel}</td>
-            <td>${Number(p.btc.toFixed(3))}</td>
-            <td>${formatCurrency(p.price)}</td>
-            <td>${formatCurrency(p.value)}</td>
-            <td>${formatCurrency(p.invested)}</td>
-            <td>${roi.toFixed(0)}%</td>
+          table.innerHTML += `
+            <tr>
+              <td>${timeLabel}</td>
+              <td>${p.btc.toFixed(8)}</td>
+              <td>${formatCurrency(p.price)}</td>
+              <td>${formatCurrency(p.value)}</td>
+              <td>${formatCurrency(p.invested)}</td>
+              <td>${roi}%</td>
+            </tr>
           `;
-          table.appendChild(row);
         });
 
         tableContainer.appendChild(table);
         return tableContainer;
       }
 
-      // Rest of the JavaScript remains the same
       function calculate() {
         const currentBtc = getInputValue("currentBtc", 0);
         const monthlyInvestment = getInputValue("monthlyInvestment", 100);
         const annualGrowthRate = getInputValue("growthRate", 25);
         const targetBtc = getInputValue("targetBtc", 1);
 
-        if (targetBtc < 0.00000001) {
-          showResult(
-            "Please enter a target Bitcoin amount greater than 0",
-            true
-          );
-          return;
-        }
-
-        if (monthlyInvestment < 1) {
-          showResult(
-            "Please enter a monthly investment amount of at least $1",
-            true
-          );
-          return;
-        }
-
-        if (annualGrowthRate < 0) {
-          showResult("Please enter a non-negative growth rate", true);
-          return;
-        }
-
-        if (currentBtcPrice <= 0) {
+        // Input validation
+        if (!currentBtcPrice) {
           showResult("Unable to calculate: Bitcoin price not available", true);
           return;
         }
-
         if (currentBtc >= targetBtc) {
           showResult("You already have more than your target amount!", true);
+          return;
+        }
+        if (monthlyInvestment <= 0) {
+          showResult("Please enter a positive monthly investment amount", true);
           return;
         }
 
         let btcAccumulated = currentBtc;
         let totalInvestment = currentBtc * currentBtcPrice;
         let months = 0;
-        const maxMonths = 1200; // 100 years limit
         let projections = [];
-        let currentProjectedPrice = currentBtcPrice;
-        let currentDate = new Date();
-        const monthlyRate = annualGrowthRate / 12 / 100;
+        let currentPrice = currentBtcPrice;
+        const monthlyGrowthRate =
+          Math.pow(1 + annualGrowthRate / 100, 1 / 12) - 1;
 
         // Add initial state
         projections.push({
           months: 0,
           btc: btcAccumulated,
-          price: currentProjectedPrice,
-          value: btcAccumulated * currentProjectedPrice,
+          price: currentPrice,
+          value: btcAccumulated * currentPrice,
           invested: totalInvestment,
         });
 
-        while (btcAccumulated < targetBtc && months < maxMonths) {
+        // Calculate monthly accumulation
+        while (btcAccumulated < targetBtc && months < 1200) {
           months++;
 
-          // Update price first
-          currentProjectedPrice *= 1 + monthlyRate;
-
-          // Add monthly investment
-          const monthlyBtc = monthlyInvestment / currentProjectedPrice;
-          btcAccumulated += monthlyBtc;
+          // Buy BTC with monthly investment at current price
+          const newBtc = monthlyInvestment / currentPrice;
+          btcAccumulated += newBtc;
           totalInvestment += monthlyInvestment;
 
-          // Calculate current value
-          const currentValue = btcAccumulated * currentProjectedPrice;
+          // Update price for next month
+          currentPrice *= 1 + monthlyGrowthRate;
 
-          // Add data point every 3 months or at the final point
+          // Record projection every quarter or at final point
           if (months % 3 === 0 || btcAccumulated >= targetBtc) {
             projections.push({
-              months: months,
+              months,
               btc: btcAccumulated,
-              price: currentProjectedPrice,
-              value: currentValue,
+              price: currentPrice,
+              value: btcAccumulated * currentPrice,
               invested: totalInvestment,
             });
           }
         }
 
-        if (months >= maxMonths) {
+        if (months >= 1200) {
           showResult(
-            "It would take over 100 years to reach your goal with these parameters.\n\n" +
-              "Consider:\n" +
-              "- Increasing your monthly investment\n" +
-              "- Adjusting your target amount\n" +
-              "- Reviewing the growth rate assumptions",
+            "Goal would take more than 100 years with current parameters",
             true
           );
-        } else {
-          const years = Math.floor(months / 12);
-          const remainingMonths = months % 12;
-
-          let resultHtml = `
-            <h3>Summary</h3>
-            <p>Estimated time to reach your goal: ${years} year${
-            years !== 1 ? "s" : ""
-          }
-            ${
-              remainingMonths > 0
-                ? ` and ${remainingMonths} month${
-                    remainingMonths !== 1 ? "s" : ""
-                  }`
-                : ""
-            }</p>
-            <p>Final BTC: ${btcAccumulated.toFixed(8)} BTC</p>
-            <p>Projected BTC Price: ${formatCurrency(currentProjectedPrice)}</p>
-            <p>Final Portfolio Value: ${formatCurrency(
-              btcAccumulated * currentProjectedPrice
-            )}</p>
-            <p>Total Investment: ${formatCurrency(totalInvestment)}</p>
-            <p>Return on Investment: ${(
-              ((btcAccumulated * currentProjectedPrice) / totalInvestment - 1) *
-              100
-            ).toFixed(1)}%</p>
-            <h3>Detailed Projections</h3>
-          `;
-
-          showResult(resultHtml);
-          document
-            .getElementById("result")
-            .appendChild(createProjectionTable(projections));
-
-          updateChart(projections);
+          return;
         }
+
+        const years = Math.floor(months / 12);
+        const remainingMonths = months % 12;
+        const timeString = `${years} year${years !== 1 ? "s" : ""}${
+          remainingMonths
+            ? ` and ${remainingMonths} month${remainingMonths !== 1 ? "s" : ""}`
+            : ""
+        }`;
+
+        const resultHtml = `
+          <h3>Goal Achievement Summary</h3>
+          <p>Time to reach goal: ${timeString}</p>
+          <p>Final Bitcoin: ${btcAccumulated.toFixed(8)} BTC</p>
+          <p>Final Bitcoin Price: ${formatCurrency(currentPrice)}</p>
+          <p>Total Investment: ${formatCurrency(totalInvestment)}</p>
+          <p>Final Portfolio Value: ${formatCurrency(
+            btcAccumulated * currentPrice
+          )}</p>
+          <p>Return on Investment: ${(
+            ((btcAccumulated * currentPrice) / totalInvestment - 1) *
+            100
+          ).toFixed(1)}%</p>
+          <h3>Detailed Projections</h3>
+        `;
+
+        showResult(resultHtml);
+        document
+          .getElementById("result")
+          .appendChild(createProjectionTable(projections));
+        updateChart(projections);
       }
 
-      // Handle decimal input properly
-      document.querySelectorAll('input[type="text"]').forEach((input) => {
-        input.addEventListener("input", function (e) {
-          let value = this.value;
-
-          // Allow only numbers, one decimal point, and one minus sign at start
-          value = value.replace(/[^\d.-]/g, "");
-
-          // Ensure only one decimal point
-          const decimalCount = (value.match(/\./g) || []).length;
-          if (decimalCount > 1) {
-            value = value.replace(/\.(?=.*\.)/g, "");
-          }
-
-          // Ensure minus sign is only at start
-          if (value.lastIndexOf("-") > 0) {
-            value = value.replace(/-/g, "");
-            if (value.startsWith("-")) {
-              value = "-" + value.substring(1);
-            }
-          }
-
-          this.value = value;
-        });
-      });
-
+      // Initialize
       fetchBitcoinPrice();
       setInterval(fetchBitcoinPrice, 60000);
     </script>
