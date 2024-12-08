@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bitcoin Goal Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -119,6 +120,12 @@
         text-align: center;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
       }
+      .chart-container {
+        margin-top: 20px;
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 8px;
+      }
 
       /* Snow Animation */
       .snowflake {
@@ -158,10 +165,9 @@
       <div class="input-group">
         <label for="currentBtc">Current Bitcoin Holdings (BTC)</label>
         <input
-          type="number"
+          type="text"
           id="currentBtc"
           step="0.00000001"
-          min="0"
           value="0"
           placeholder="0.0"
           onfocus="this.select()"
@@ -170,9 +176,8 @@
       <div class="input-group">
         <label for="monthlyInvestment">Monthly Investment (USD)</label>
         <input
-          type="number"
+          type="text"
           id="monthlyInvestment"
-          min="0"
           value="100"
           placeholder="100"
           onfocus="this.select()"
@@ -181,9 +186,8 @@
       <div class="input-group">
         <label for="growthRate">Annual Growth Rate (%)</label>
         <input
-          type="number"
+          type="text"
           id="growthRate"
-          min="0"
           value="25"
           placeholder="25"
           onfocus="this.select()"
@@ -192,10 +196,9 @@
       <div class="input-group">
         <label for="targetBtc">Target Bitcoin Amount (BTC)</label>
         <input
-          type="number"
+          type="text"
           id="targetBtc"
           step="0.00000001"
-          min="0"
           value="1.0"
           placeholder="1.0"
           onfocus="this.select()"
@@ -204,9 +207,13 @@
       <button onclick="calculate()">Calculate</button>
       <div id="result"></div>
       <div id="error-message"></div>
+      <div class="chart-container">
+        <canvas id="projectionChart"></canvas>
+      </div>
     </div>
     <script>
       let currentBtcPrice = 0;
+      let projectionChart = null;
 
       // Snow animation
       function createSnowflake() {
@@ -247,7 +254,7 @@
 
       function getInputValue(id, defaultValue = 0) {
         const element = document.getElementById(id);
-        const value = parseFloat(element.value.replace(/[^\d.-]/g, ""));
+        const value = parseFloat(element.value);
         return isNaN(value) ? defaultValue : value;
       }
 
@@ -277,11 +284,89 @@
         }
       }
 
+      function updateChart(projections) {
+        const labels = projections.map((p) => {
+          const years = Math.floor(p.months / 12);
+          const months = p.months % 12;
+          return months > 0 ? `Year ${years}.${months}` : `Year ${years}`;
+        });
+        const portfolioValues = projections.map((p) => p.value);
+        const btcPrices = projections.map((p) => p.price);
+        const totalInvested = projections.map((p) => p.invested);
+
+        if (projectionChart) {
+          projectionChart.destroy();
+        }
+
+        const ctx = document.getElementById("projectionChart").getContext("2d");
+        projectionChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Portfolio Value",
+                data: portfolioValues,
+                borderColor: "#c41e3a",
+                backgroundColor: "rgba(196, 30, 58, 0.1)",
+                fill: true,
+                yAxisID: "y",
+              },
+              {
+                label: "Bitcoin Price",
+                data: btcPrices,
+                borderColor: "#f7931a",
+                backgroundColor: "rgba(247, 147, 26, 0.1)",
+                fill: true,
+                yAxisID: "y",
+              },
+              {
+                label: "Total Invested",
+                data: totalInvested,
+                borderColor: "#2d862d",
+                backgroundColor: "rgba(45, 134, 45, 0.1)",
+                fill: true,
+                yAxisID: "y",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            interaction: {
+              mode: "index",
+              intersect: false,
+            },
+            scales: {
+              y: {
+                type: "logarithmic",
+                display: true,
+                position: "left",
+                title: {
+                  display: true,
+                  text: "Value (USD)",
+                },
+              },
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.dataset.label}: ${formatCurrency(
+                      context.raw
+                    )}`;
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
       function createProjectionTable(projections) {
         const table = document.createElement("table");
         table.innerHTML = `
           <tr>
-            <th>Year</th>
+            <th>Time</th>
             <th>BTC Amount</th>
             <th>BTC Price</th>
             <th>Portfolio Value</th>
@@ -291,10 +376,15 @@
         `;
 
         projections.forEach((p) => {
+          const years = Math.floor(p.months / 12);
+          const months = p.months % 12;
+          const timeLabel =
+            months > 0 ? `Year ${years}.${months}` : `Year ${years}`;
+
           const row = document.createElement("tr");
           const roi = (p.value / p.invested - 1) * 100;
           row.innerHTML = `
-            <td>${p.year}</td>
+            <td>${timeLabel}</td>
             <td>${p.btc.toFixed(8)}</td>
             <td>${formatCurrency(p.price)}</td>
             <td>${formatCurrency(p.value)}</td>
@@ -345,7 +435,7 @@
         }
 
         let btcAccumulated = currentBtc;
-        let totalInvestment = 0;
+        let totalInvestment = currentBtc * currentBtcPrice;
         let months = 0;
         const maxMonths = 1200; // 100 years limit
         let projections = [];
@@ -353,25 +443,36 @@
         let currentDate = new Date();
         const monthlyRate = annualGrowthRate / 12 / 100;
 
+        // Add initial state
+        projections.push({
+          months: 0,
+          btc: btcAccumulated,
+          price: currentProjectedPrice,
+          value: btcAccumulated * currentProjectedPrice,
+          invested: totalInvestment,
+        });
+
         while (btcAccumulated < targetBtc && months < maxMonths) {
+          months++;
+
+          // Update price first
+          currentProjectedPrice *= 1 + monthlyRate;
+
+          // Add monthly investment
           const monthlyBtc = monthlyInvestment / currentProjectedPrice;
           btcAccumulated += monthlyBtc;
           totalInvestment += monthlyInvestment;
-          currentProjectedPrice *= 1 + monthlyRate;
 
-          if (btcAccumulated > monthlyBtc) {
-            btcAccumulated *= 1 + monthlyRate;
-          }
+          // Calculate current value
+          const currentValue = btcAccumulated * currentProjectedPrice;
 
-          currentDate.setMonth(currentDate.getMonth() + 1);
-          months++;
-
-          if (months % 12 === 0) {
+          // Add data point every 3 months or at the final point
+          if (months % 3 === 0 || btcAccumulated >= targetBtc) {
             projections.push({
-              year: (months / 12).toFixed(0),
+              months: months,
               btc: btcAccumulated,
               price: currentProjectedPrice,
-              value: btcAccumulated * currentProjectedPrice,
+              value: currentValue,
               invested: totalInvestment,
             });
           }
@@ -412,22 +513,41 @@
               ((btcAccumulated * currentProjectedPrice) / totalInvestment - 1) *
               100
             ).toFixed(1)}%</p>
-            <h3>Year-by-Year Projections</h3>
+            <h3>Detailed Projections</h3>
           `;
 
           showResult(resultHtml);
           document
             .getElementById("result")
             .appendChild(createProjectionTable(projections));
+
+          updateChart(projections);
         }
       }
 
-      document.querySelectorAll('input[type="number"]').forEach((input) => {
+      // Handle decimal input properly
+      document.querySelectorAll('input[type="text"]').forEach((input) => {
         input.addEventListener("input", function (e) {
-          let value = this.value.replace(/[^\d.-]/g, "");
-          if (value) {
-            this.value = parseFloat(value);
+          let value = this.value;
+
+          // Allow only numbers, one decimal point, and one minus sign at start
+          value = value.replace(/[^\d.-]/g, "");
+
+          // Ensure only one decimal point
+          const decimalCount = (value.match(/\./g) || []).length;
+          if (decimalCount > 1) {
+            value = value.replace(/\.(?=.*\.)/g, "");
           }
+
+          // Ensure minus sign is only at start
+          if (value.lastIndexOf("-") > 0) {
+            value = value.replace(/-/g, "");
+            if (value.startsWith("-")) {
+              value = "-" + value.substring(1);
+            }
+          }
+
+          this.value = value;
         });
       });
 
