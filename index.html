@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Previous content remains the same until the mobile styles -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,6 +7,7 @@
     <title>Bitcoin Goal Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+      /* Previous styles remain the same until the mobile styles */
       body {
         font-family: Arial, sans-serif;
         max-width: 800px;
@@ -92,16 +94,24 @@
         margin-bottom: 15px;
         font-size: 0.9em;
       }
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 auto;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 15px;
+        min-width: 400px; /* Further reduced from 450px */
       }
       th,
       td {
         border: 1px solid #ddd;
         padding: 8px;
         text-align: right;
+        white-space: nowrap;
       }
       th {
         background-color: #c41e3a;
@@ -148,8 +158,40 @@
           transform: translateY(100vh) translateX(20px);
         }
       }
+
+      /* Mobile-specific styles */
+      @media screen and (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+        .calculator {
+          padding: 15px;
+        }
+        .table-container {
+          width: 100%;
+          margin: 0 auto;
+          font-size: 0.75em;
+          display: flex;
+          justify-content: center;
+        }
+        table {
+          min-width: 380px;
+          max-width: 100%;
+        }
+        th,
+        td {
+          padding: 3px 4px;
+        }
+        #result {
+          padding: 10px;
+        }
+        h3 {
+          font-size: 1.1em;
+        }
+      }
     </style>
   </head>
+  <!-- Rest of the HTML content remains exactly the same -->
   <body>
     <div class="calculator">
       <h1>Bitcoin Goal Calculator</h1>
@@ -215,7 +257,7 @@
       let currentBtcPrice = 0;
       let projectionChart = null;
 
-      // Snow animation
+      // Previous JavaScript functions remain the same until formatCurrency
       function createSnowflake() {
         const snowflake = document.createElement("div");
         snowflake.classList.add("snowflake");
@@ -232,7 +274,6 @@
         }, 5000);
       }
 
-      // Create snowflakes periodically
       setInterval(createSnowflake, 100);
 
       async function fetchBitcoinPrice() {
@@ -259,14 +300,27 @@
       }
 
       function formatCurrency(value) {
-        return new Intl.NumberFormat("en-US", {
+        // Even more compact number formatting
+        const decimalPlaces = value >= 1000000 ? 0 : value >= 10000 ? 1 : 2;
+        const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
+          minimumFractionDigits: decimalPlaces,
+          maximumFractionDigits: decimalPlaces,
         }).format(value);
+
+        // For very large numbers, use K/M/B notation
+        if (value >= 1000000000) {
+          return `${(value / 1000000000).toFixed(1)}B`;
+        } else if (value >= 1000000) {
+          return `${(value / 1000000).toFixed(1)}M`;
+        } else if (value >= 1000) {
+          return `${(value / 1000).toFixed(1)}K`;
+        }
+        return formatted;
       }
 
+      // Previous JavaScript functions remain the same until createProjectionTable
       function showResult(message, isError = false) {
         const resultDiv = document.getElementById("result");
         const errorDiv = document.getElementById("error-message");
@@ -363,14 +417,17 @@
       }
 
       function createProjectionTable(projections) {
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+
         const table = document.createElement("table");
         table.innerHTML = `
           <tr>
             <th>Time</th>
-            <th>BTC Amount</th>
-            <th>BTC Price</th>
-            <th>Portfolio Value</th>
-            <th>Total Invested</th>
+            <th>BTC</th>
+            <th>Price</th>
+            <th>Value</th>
+            <th>Inv.</th>
             <th>ROI</th>
           </tr>
         `;
@@ -378,25 +435,26 @@
         projections.forEach((p) => {
           const years = Math.floor(p.months / 12);
           const months = p.months % 12;
-          const timeLabel =
-            months > 0 ? `Year ${years}.${months}` : `Year ${years}`;
+          const timeLabel = months > 0 ? `Y${years}.${months}` : `Y${years}`;
 
           const row = document.createElement("tr");
           const roi = (p.value / p.invested - 1) * 100;
           row.innerHTML = `
             <td>${timeLabel}</td>
-            <td>${p.btc.toFixed(8)}</td>
+            <td>${Number(p.btc.toFixed(3))}</td>
             <td>${formatCurrency(p.price)}</td>
             <td>${formatCurrency(p.value)}</td>
             <td>${formatCurrency(p.invested)}</td>
-            <td>${roi.toFixed(1)}%</td>
+            <td>${roi.toFixed(0)}%</td>
           `;
           table.appendChild(row);
         });
 
-        return table;
+        tableContainer.appendChild(table);
+        return tableContainer;
       }
 
+      // Rest of the JavaScript remains the same
       function calculate() {
         const currentBtc = getInputValue("currentBtc", 0);
         const monthlyInvestment = getInputValue("monthlyInvestment", 100);
